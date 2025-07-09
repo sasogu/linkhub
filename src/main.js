@@ -17,6 +17,9 @@ app.innerHTML = `
     <button id="import-btn" type="button">Importar enlaces</button>
   </div>
   <div style="margin:1em 0;">
+    <input type="text" id="search" placeholder="Buscar enlaces..." style="width:60%;max-width:400px;" />
+  </div>
+  <div style="margin:1em 0;">
     <label>Filtrar por categoría:
       <select id="filter-category">
         <option value="">Todas</option>
@@ -39,6 +42,7 @@ const importBtn = document.getElementById('import-btn');
 const importFile = document.getElementById('import-file');
 const filterCategory = document.getElementById('filter-category');
 const filterTag = document.getElementById('filter-tag');
+const searchInput = document.getElementById('search');
 
 function getLinks() {
   return JSON.parse(localStorage.getItem('links') || '[]');
@@ -49,16 +53,16 @@ function saveLinks(links) {
 }
 
 function getAllCategories(links) {
-  return Array.from(new Set(links.map(l => l.category).filter(Boolean)));
+  return Array.from(new Set(links.map(l => (l.category || '').trim()).filter(Boolean)));
 }
 function getAllTags(links) {
-  return Array.from(new Set(links.flatMap(l => l.tags || []).filter(Boolean)));
+  return Array.from(new Set(links.flatMap(l => (l.tags || []).map(t => t.trim())).filter(Boolean)));
 }
 
 function updateFilters() {
   const links = getLinks();
-  const categories = getAllCategories(links);
-  const tags = getAllTags(links);
+  const categories = getAllCategories(links).sort((a, b) => a.localeCompare(b, 'es', {sensitivity:'base'}));
+  const tags = getAllTags(links).sort((a, b) => a.localeCompare(b, 'es', {sensitivity:'base'}));
   filterCategory.innerHTML = '<option value="">Todas</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
   filterTag.innerHTML = '<option value="">Todas</option>' + tags.map(t => `<option value="${t}">${t}</option>`).join('');
 }
@@ -68,22 +72,43 @@ function renderLinks() {
   let filtered = links;
   const cat = filterCategory.value;
   const tag = filterTag.value;
+  const search = (searchInput.value || '').toLowerCase();
   if (cat) filtered = filtered.filter(l => (l.category || '') === cat);
   if (tag) filtered = filtered.filter(l => (l.tags || []).map(String).includes(tag));
+  if (search) {
+    filtered = filtered.filter(l =>
+      (l.title && l.title.toLowerCase().includes(search)) ||
+      (l.url && l.url.toLowerCase().includes(search)) ||
+      (l.category && l.category.toLowerCase().includes(search)) ||
+      (l.tags && l.tags.join(',').toLowerCase().includes(search))
+    );
+  }
   if (filtered.length === 0) {
     linksList.innerHTML = '<p>No hay enlaces guardados.</p>';
     return;
   }
-  linksList.innerHTML = filtered.map((link, idx) => `
-    <div class="link-item" data-idx="${links.indexOf(link)}">
+  // Separar fijados y normales
+  const pinned = filtered.filter(l => l.pinned);
+  const normal = filtered.filter(l => !l.pinned);
+  // Ordenar alfabéticamente por título
+  pinned.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'es', {sensitivity:'base'}));
+  normal.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'es', {sensitivity:'base'}));
+  const render = arr => arr.map((link, idx) => `
+    <div class="link-item${link.pinned ? ' pinned' : ''}" data-idx="${links.indexOf(link)}">
       <a href="${link.url}" target="_blank">${link.title}</a>
       <div><strong>Categoría:</strong> ${link.category || '-'}</div>
       <div><strong>Etiquetas:</strong> ${link.tags ? link.tags.join(', ') : '-'}</div>
       <button class="edit-link" style="margin-top:0.5em;">Editar</button>
+      <button class="pin-link" style="margin-top:0.5em;">${link.pinned ? 'Desfijar' : 'Fijar'}</button>
+      <button class="delete-link" style="margin-top:0.5em;color:#c00;background:#fff3f3;border:1px solid #c00;">Eliminar</button>
+      <button class="share-link" style="margin-top:0.5em;color:#1a7f37;background:#e6fff3;border:1px solid #1a7f37;">Compartir</button>
     </div>
   `).join('');
+  linksList.innerHTML =
+    (pinned.length ? '<div style="font-size:0.95em;color:#535bf2;margin-bottom:0.5em;">Fijados</div>' + render(pinned) : '') +
+    render(normal);
 
-  // Añadir eventos de edición
+  // Eventos de edición
   document.querySelectorAll('.edit-link').forEach(btn => {
     btn.onclick = function() {
       const idx = this.parentElement.getAttribute('data-idx');
@@ -95,6 +120,44 @@ function renderLinks() {
       form.setAttribute('data-edit', idx);
       form.querySelector('button[type="submit"]').textContent = 'Guardar cambios';
       form.scrollIntoView({behavior:'smooth'});
+    };
+  });
+  // Eventos de fijar/desfijar
+  document.querySelectorAll('.pin-link').forEach(btn => {
+    btn.onclick = function() {
+      const idx = this.parentElement.getAttribute('data-idx');
+      const links = getLinks();
+      links[idx].pinned = !links[idx].pinned;
+      saveLinks(links);
+      renderLinks();
+    };
+  });
+  document.querySelectorAll('.delete-link').forEach(btn => {
+    btn.onclick = function() {
+      const idx = this.parentElement.getAttribute('data-idx');
+      if (confirm('¿Seguro que quieres eliminar este enlace?')) {
+        const links = getLinks();
+        links.splice(idx, 1);
+        saveLinks(links);
+        renderLinks();
+        updateFilters();
+      }
+    };
+  });
+  document.querySelectorAll('.share-link').forEach(btn => {
+    btn.onclick = function() {
+      const idx = this.parentElement.getAttribute('data-idx');
+      const link = getLinks()[idx];
+      if (navigator.share) {
+        navigator.share({
+          title: link.title,
+          text: link.title + (link.category ? ' [' + link.category + ']' : ''),
+          url: link.url
+        });
+      } else {
+        navigator.clipboard.writeText(link.url);
+        alert('Enlace copiado al portapapeles');
+      }
     };
   });
 }
@@ -166,6 +229,7 @@ filterCategory.addEventListener('change', () => {
 filterTag.addEventListener('change', () => {
   renderLinks();
 });
+searchInput.addEventListener('input', renderLinks);
 
 // Inicializar filtros y enlaces tras cargar la página
 updateFilters();

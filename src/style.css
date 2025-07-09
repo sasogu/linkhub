@@ -112,6 +112,19 @@ button:focus-visible {
   color: #535bf2;
 }
 
+.link-item.pinned {
+  background: linear-gradient(90deg, #ffe066 0%, #fffbe6 100%);
+  border: 2px solid #ffd700;
+  box-shadow: 0 4px 16px 0 #ffd70033;
+}
+.link-item.pinned .pin-link {
+  color: #b8860b;
+  font-weight: bold;
+}
+.link-item.pinned a {
+  color: #b8860b;
+}
+
 /* Mejorar el aspecto de los selectores y formularios */
 select, input[type="text"], input[type="url"] {
   border-radius: 6px;
