@@ -1,4 +1,4 @@
-const CACHE_VERSION = '0.2.4'; // Este valor será reemplazado automáticamente
+const CACHE_VERSION = '0.2.5'; // Este valor será reemplazado automáticamente
 const CACHE_NAME = `linkhub-cache-${CACHE_VERSION}`;
 
 self.addEventListener('install', event => {
