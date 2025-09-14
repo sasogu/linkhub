@@ -21,6 +21,11 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  // No interceptar peticiones cross-origin (p. ej., Dropbox APIs)
+  if (url.origin !== self.location.origin) {
+    return; // dejar que el navegador gestione la solicitud
+  }
   event.respondWith(
     caches.open(CACHE_NAME).then(cache => {
       return cache.match(event.request).then(response => {

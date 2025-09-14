@@ -35,6 +35,11 @@
   --pinned-border: #d4a300;
   --pinned-shadow: #d4a30033;
   --pinned-accent: #d4a300;
+
+  /* Danger (dark defaults) */
+  --danger-bg: #3a1f1f;
+  --danger-border: #ff6b6b;
+  --danger-fg: #ffdede;
 }
 
 /* Layout seguro en móviles: sin scroll horizontal */
@@ -84,7 +89,7 @@ h1 {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
 .logo.vanilla:hover {
-  filter: drop-shadow(0 0 2em #f7df1eeaa);
+  filter: drop-shadow(0 0 2em #646cffaa);
 }
 
 .card {
