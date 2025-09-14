@@ -13,6 +13,11 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Layout seguro en móviles: sin scroll horizontal */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+img, svg, video, canvas { max-width: 100%; height: auto; }
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -40,6 +45,7 @@ h1 {
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  overflow-x: hidden;
 }
 
 .logo {
@@ -136,6 +142,19 @@ select, input[type="text"], input[type="url"] {
 select:focus, input:focus {
   border-color: #646cff;
   outline: none;
+}
+
+/* Barra de Dropbox adaptable */
+#dropbox-bar { flex-wrap: wrap; }
+
+/* Ajustes móviles para evitar desbordes */
+@media (max-width: 600px) {
+  #app { padding: 1rem; }
+  input[type="text"], input[type="url"], select, #search {
+    width: 100%;
+    max-width: 100%;
+  }
+  button { width: 100%; }
 }
 
 @media (prefers-color-scheme: light) {

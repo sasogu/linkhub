@@ -8,7 +8,6 @@ app.innerHTML = `
     <span id=\"dropbox-status\" style=\"font-size:0.9em;color:#888;\">Dropbox: desconectado</span>
     <button id=\"dropbox-connect\" type=\"button\">Conectar Dropbox</button>
     <button id=\"dropbox-sync\" type=\"button\" disabled>Sincronizar ahora</button>
-    <button id=\"dropbox-disconnect\" type=\"button\" disabled>Desconectar</button>
   </div>
   <form id="link-form">
     <input type="url" id="url" placeholder="Enlace (https://...)" required />
@@ -54,7 +53,7 @@ const searchInput = document.getElementById('search');
 const dbxStatus = document.getElementById('dropbox-status');
 const dbxConnectBtn = document.getElementById('dropbox-connect');
 const dbxSyncBtn = document.getElementById('dropbox-sync');
-const dbxDisconnectBtn = document.getElementById('dropbox-disconnect');
+// sin botón de desconexión
 // SW version UI
 const swVersionEl = document.getElementById('sw-version');
 
@@ -268,13 +267,11 @@ function setDropboxUIConnected(connected, accountName) {
     dbxStatus.style.color = '#1a7f37';
     dbxConnectBtn.disabled = true;
     dbxSyncBtn.disabled = false;
-    dbxDisconnectBtn.disabled = false;
   } else {
     dbxStatus.textContent = 'Dropbox: desconectado';
     dbxStatus.style.color = '#888';
     dbxConnectBtn.disabled = false;
     dbxSyncBtn.disabled = true;
-    dbxDisconnectBtn.disabled = true;
   }
 }
 
@@ -511,10 +508,6 @@ async function syncNow() {
 }
 
 dbxConnectBtn.addEventListener('click', startDropboxAuth);
-dbxDisconnectBtn.addEventListener('click', () => {
-  setStoredDropboxAuth(null);
-  setDropboxUIConnected(false);
-});
 dbxSyncBtn.addEventListener('click', () => { syncNow(); });
 
 window.addEventListener('online', () => queueDropboxSync(200));
