@@ -1,4 +1,4 @@
-const CACHE_VERSION = '0.3.0'; // Este valor será reemplazado automáticamente
+const CACHE_VERSION = '0.3.1'; // Este valor será reemplazado automáticamente
 const CACHE_NAME = `linkhub-cache-${CACHE_VERSION}`;
 
 self.addEventListener('install', event => {
@@ -21,6 +21,11 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  // No interceptar peticiones cross-origin (p. ej., Dropbox APIs)
+  if (url.origin !== self.location.origin) {
+    return; // dejar que el navegador gestione la solicitud
+  }
   event.respondWith(
     caches.open(CACHE_NAME).then(cache => {
       return cache.match(event.request).then(response => {
