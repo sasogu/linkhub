@@ -251,10 +251,22 @@ function renderLinks() {
       <a href="${link.url}" target="_blank">${link.title}</a>
       <div><strong>Categoría:</strong> ${link.category || '-'}</div>
       <div><strong>Etiquetas:</strong> ${link.tags ? link.tags.join(', ') : '-'}</div>
-      <button class="edit-link" style="margin-top:0.5em;">Editar</button>
-      <button class="pin-link" style="margin-top:0.5em;">${link.pinned ? 'Desfijar' : 'Fijar'}</button>
-      <button class="delete-link btn--danger" style="margin-top:0.5em;">Eliminar</button>
-      <button class="share-link btn--ghost" style="margin-top:0.5em;">Compartir</button>
+      <div class="link-actions">
+        <button class="edit-link icon-btn" aria-label="Editar" title="Editar">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM21.41 6.34c.39-.39.39-1.02 0-1.41L19.07 2.59a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+        </button>
+        <button class="pin-link icon-btn" aria-label="${link.pinned ? 'Desfijar' : 'Fijar'}" title="${link.pinned ? 'Desfijar' : 'Fijar'}">
+          ${link.pinned
+            ? '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16 12V4l1-1V2H7v1l1 1v8l-2 2v1h6v7h2v-7h6v-1l-2-2z"/></svg>'
+            : '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16 12V5h1V4H7v1h1v7l-2 2v1h6v6h2v-6h6v-1l-2-2z"/></svg>'}
+        </button>
+        <button class="delete-link icon-btn btn--danger" aria-label="Eliminar" title="Eliminar">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 7h12v2H6V7zm2 3h8l-1 9H9L8 10zm3-7h2l1 1h5v2H3V4h5l1-1z"/></svg>
+        </button>
+        <button class="share-link icon-btn btn--ghost" aria-label="Compartir" title="Compartir">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7a3.27 3.27 0 0 0 0-1.39l7-4.11A3 3 0 1 0 14 5a3 3 0 0 0 .06.6l-7 4.11a3 3 0 1 0 0 4.58l7.06 4.14A3 3 0 1 0 18 16.08z"/></svg>
+        </button>
+      </div>
     </div>
   `).join('');
   linksList.innerHTML =

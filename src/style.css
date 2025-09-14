@@ -161,6 +161,30 @@ button:focus-visible {
   color: var(--accent-2);
 }
 
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.5em;
+  margin-right: 0.25em;
+}
+.icon-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.link-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5em;
+}
+
 .link-item.pinned {
   background: var(--pinned-bg);
   border: 2px solid var(--pinned-border);
