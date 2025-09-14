@@ -44,7 +44,7 @@ app.innerHTML = `
 // Configuración: crear modal y mover controles (Dropbox, Importar/Exportar)
 (function setupSettingsModal() {
   try {
-    const h1 = app.querySelector('h1');
+    const formEl = document.getElementById('link-form');
     const wrap = document.createElement('div');
     wrap.style.margin = '0.5em 0';
     wrap.id = 'settings-trigger';
@@ -53,7 +53,7 @@ app.innerHTML = `
     btn.type = 'button';
     btn.textContent = 'Configuración';
     wrap.appendChild(btn);
-    if (h1 && h1.parentNode) h1.parentNode.insertBefore(wrap, h1.nextSibling);
+    if (formEl && formEl.parentNode) formEl.insertAdjacentElement('afterend', wrap);
 
     app.insertAdjacentHTML('beforeend', `
       <div id="settings-modal" class="modal-backdrop" aria-hidden="true">
@@ -82,7 +82,17 @@ app.innerHTML = `
     const modalData = modal.querySelector('#modal-data');
 
     const dropboxBar = document.getElementById('dropbox-bar');
-    if (dropboxBar) modalDropbox.appendChild(dropboxBar);
+    if (dropboxBar) {
+      modalDropbox.appendChild(dropboxBar);
+      // Añadir botón Desconectar dentro de la barra
+      const discBtn = document.createElement('button');
+      discBtn.id = 'dropbox-disconnect';
+      discBtn.type = 'button';
+      discBtn.textContent = 'Desconectar';
+      discBtn.disabled = true;
+      dropboxBar.appendChild(discBtn);
+      dbxDisconnectBtn = discBtn;
+    }
 
     const exportBtnEl = document.getElementById('export-btn');
     if (exportBtnEl && exportBtnEl.parentElement) {
@@ -116,7 +126,7 @@ const searchInput = document.getElementById('search');
 const dbxStatus = document.getElementById('dropbox-status');
 const dbxConnectBtn = document.getElementById('dropbox-connect');
 const dbxSyncBtn = document.getElementById('dropbox-sync');
-// sin botón de desconexión
+let dbxDisconnectBtn = null; // se creará en el modal
 // SW version UI
 const swVersionEl = document.getElementById('sw-version');
 
@@ -330,11 +340,13 @@ function setDropboxUIConnected(connected, accountName) {
     dbxStatus.style.color = '#1a7f37';
     dbxConnectBtn.disabled = true;
     dbxSyncBtn.disabled = false;
+    if (dbxDisconnectBtn) dbxDisconnectBtn.disabled = false;
   } else {
     dbxStatus.textContent = 'Dropbox: desconectado';
     dbxStatus.style.color = '#888';
     dbxConnectBtn.disabled = false;
     dbxSyncBtn.disabled = true;
+    if (dbxDisconnectBtn) dbxDisconnectBtn.disabled = true;
   }
 }
 
@@ -572,6 +584,14 @@ async function syncNow() {
 
 dbxConnectBtn.addEventListener('click', startDropboxAuth);
 dbxSyncBtn.addEventListener('click', () => { syncNow(); });
+// Desconectar Dropbox (botón en el modal)
+document.addEventListener('click', (e) => {
+  const t = e.target;
+  if (t && t.id === 'dropbox-disconnect') {
+    setStoredDropboxAuth(null);
+    setDropboxUIConnected(false);
+  }
+});
 
 window.addEventListener('online', () => queueDropboxSync(200));
 
