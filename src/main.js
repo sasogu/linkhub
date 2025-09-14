@@ -9,14 +9,17 @@ app.innerHTML = `
     <button id=\"dropbox-connect\" type=\"button\">Conectar Dropbox</button>
     <button id=\"dropbox-sync\" type=\"button\" disabled>Sincronizar ahora</button>
   </div>
-  <form id="link-form">
+  <form id="link-form" hidden>
     <input type="url" id="url" placeholder="Enlace (https://...)" required />
     <input type="text" id="title" placeholder="Título" required />
     <input type="text" id="tags" list="tags-datalist" placeholder="Etiquetas (separadas por coma)" />
     <datalist id="tags-datalist"></datalist>
     <input type="text" id="category" list="categories-datalist" placeholder="Categoría" />
     <datalist id="categories-datalist"></datalist>
-    <button type="submit">Añadir enlace</button>
+    <div style="margin-top:0.6em;display:flex;gap:0.5em;flex-wrap:wrap;justify-content:center;">
+      <button type="submit">Añadir enlace</button>
+      <button type="button" id="form-cancel">Cancelar</button>
+    </div>
   </form>
   <div style="margin:1em 0;">
     <button id="export-btn">Exportar enlaces</button>
@@ -47,18 +50,82 @@ app.innerHTML = `
 let dbxDisconnectBtn = null;
 
 // Configuración: crear modal y mover controles (Dropbox, Importar/Exportar)
-(function setupSettingsModal() {
+(function setupAddModal() {
   try {
     const formEl = document.getElementById('link-form');
-    const wrap = document.createElement('div');
-    wrap.style.margin = '0.5em 0';
-    wrap.id = 'settings-trigger';
+    // Barra de acciones superior
+    const top = document.createElement('div');
+    top.id = 'top-actions';
+    top.style.margin = '0.5em 0';
+    if (formEl && formEl.parentNode) formEl.insertAdjacentElement('afterend', top);
+
+    // Botón Abrir modal Añadir
+    const addBtn = document.createElement('button');
+    addBtn.id = 'add-open';
+    addBtn.type = 'button';
+    addBtn.className = 'btn--primary';
+    addBtn.textContent = 'Añadir enlace';
+    top.appendChild(addBtn);
+
+    // Crear modal de añadir
+    app.insertAdjacentHTML('beforeend', `
+      <div id="add-modal" class="modal-backdrop" aria-hidden="true">
+        <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="add-title">
+          <div class="modal-header">
+            <h2 id="add-title">Añadir enlace</h2>
+            <button id="add-close" type="button" aria-label="Cerrar">✕</button>
+          </div>
+          <div class="modal-section">
+            <div id="add-form-slot"></div>
+          </div>
+          <div class="modal-footer">
+            <button id="add-close-2" type="button">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    `);
+
+    const addModal = document.getElementById('add-modal');
+    const addSlot = document.getElementById('add-form-slot');
+    addSlot.appendChild(formEl);
+    formEl.hidden = false;
+    // Estilo primario al botón de submit
+    const submitBtn = formEl.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.classList.add('btn--primary');
+    const cancelBtn = formEl.querySelector('#form-cancel');
+    if (cancelBtn) cancelBtn.classList.add('btn--ghost');
+
+    function openAdd(){ addModal.classList.add('open'); addModal.setAttribute('aria-hidden','false'); }
+    function closeAdd(){ addModal.classList.remove('open'); addModal.setAttribute('aria-hidden','true'); }
+    addBtn.addEventListener('click', openAdd);
+    document.getElementById('add-close').addEventListener('click', closeAdd);
+    document.getElementById('add-close-2').addEventListener('click', closeAdd);
+    addModal.addEventListener('click', (e)=>{ if (e.target === addModal) closeAdd(); });
+
+    // Exponer para uso al editar
+    window.__openAddModal = openAdd;
+  
+  } catch (e) {
+    console.warn('Add modal setup error:', e);
+  }
+})();
+
+(function setupSettingsModal() {
+  try {
+    // Botón Configuración: añadir a la barra superior si existe
+    const top = document.getElementById('top-actions') || (function(){
+      const formEl = document.getElementById('link-form');
+      const t = document.createElement('div');
+      t.id = 'top-actions';
+      t.style.margin = '0.5em 0';
+      if (formEl && formEl.parentNode) formEl.insertAdjacentElement('afterend', t);
+      return t;
+    })();
     const btn = document.createElement('button');
     btn.id = 'settings-open';
     btn.type = 'button';
     btn.textContent = 'Configuración';
-    wrap.appendChild(btn);
-    if (formEl && formEl.parentNode) formEl.insertAdjacentElement('afterend', wrap);
+    top.appendChild(btn);
 
     app.insertAdjacentHTML('beforeend', `
       <div id="settings-modal" class="modal-backdrop" aria-hidden="true">
@@ -175,6 +242,7 @@ const linksList = document.getElementById('links-list');
 const exportBtn = document.getElementById('export-btn');
 const importBtn = document.getElementById('import-btn');
 const importFile = document.getElementById('import-file');
+const formCancel = document.getElementById('form-cancel');
 const filterCategory = document.getElementById('filter-category');
 const filterTag = document.getElementById('filter-tag');
 const searchInput = document.getElementById('search');
@@ -279,6 +347,7 @@ function renderLinks() {
       const container = this.closest('.link-item');
       const idx = container ? container.getAttribute('data-idx') : null;
       const link = getLinks()[idx];
+      if (window.__openAddModal) window.__openAddModal();
       form.url.value = link.url;
       form.title.value = link.title;
       form.tags.value = (link.tags || []).join(', ');
@@ -353,6 +422,12 @@ form.addEventListener('submit', e => {
   form.reset();
   renderLinks();
   updateFilters();
+  // Cerrar modal de añadir si está abierto
+  const addModal = document.getElementById('add-modal');
+  if (addModal && addModal.classList.contains('open')) {
+    addModal.classList.remove('open');
+    addModal.setAttribute('aria-hidden', 'true');
+  }
 });
 
 exportBtn.addEventListener('click', () => {
@@ -392,6 +467,21 @@ importFile.addEventListener('change', (e) => {
   reader.readAsText(file);
   importFile.value = '';
 });
+
+// Cancelar en el formulario: cerrar modal y limpiar estado de edición
+if (formCancel) {
+  formCancel.addEventListener('click', () => {
+    form.reset();
+    form.removeAttribute('data-edit');
+    const sb = form.querySelector('button[type="submit"]');
+    if (sb) sb.textContent = 'Añadir enlace';
+    const addModal = document.getElementById('add-modal');
+    if (addModal) {
+      addModal.classList.remove('open');
+      addModal.setAttribute('aria-hidden', 'true');
+    }
+  });
+}
 
 filterCategory.addEventListener('change', () => {
   renderLinks();
