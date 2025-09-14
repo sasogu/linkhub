@@ -21,6 +21,11 @@
   --input-border: #3a3a3a;
   --panel-bg: #1f2130;
   --panel-border: #ffffff22;
+  /* Pinned (dark default) */
+  --pinned-bg: linear-gradient(90deg, #4a3a00 0%, #2e2400 100%);
+  --pinned-border: #d4a300;
+  --pinned-shadow: #d4a30033;
+  --pinned-accent: #d4a300;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -136,16 +141,16 @@ button:focus-visible {
 }
 
 .link-item.pinned {
-  background: linear-gradient(90deg, #ffe066 0%, #fffbe6 100%);
-  border: 2px solid #ffd700;
-  box-shadow: 0 4px 16px 0 #ffd70033;
+  background: var(--pinned-bg);
+  border: 2px solid var(--pinned-border);
+  box-shadow: 0 4px 16px 0 var(--pinned-shadow);
 }
 .link-item.pinned .pin-link {
-  color: #b8860b;
+  color: var(--pinned-accent);
   font-weight: bold;
 }
 .link-item.pinned a {
-  color: #b8860b;
+  color: var(--pinned-accent);
 }
 
 /* Mejorar el aspecto de los selectores y formularios */
@@ -193,6 +198,11 @@ select:focus, input:focus {
     --input-border: #cccccc;
     --panel-bg: #ffffff;
     --panel-border: #0000001a;
+    /* Pinned (light) */
+    --pinned-bg: linear-gradient(90deg, #fff3b0 0%, #fffbe6 100%);
+    --pinned-border: #ffd24d;
+    --pinned-shadow: #ffd24d33;
+    --pinned-accent: #b8860b;
   }
   a:hover {
     color: #747bff;
