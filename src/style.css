@@ -7,6 +7,21 @@
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
 
+  /* Theme variables (dark by default) */
+  --bg: #242424;
+  --fg: rgba(255, 255, 255, 0.87);
+  --muted: #a0a0a0;
+  --accent: #646cff;
+  --accent-2: #535bf2;
+  --card-bg: #2b2f42;
+  --card-border: #646cff33;
+  --button-bg: #1a1a1a;
+  --input-bg: #1a1a1a;
+  --input-fg: var(--fg);
+  --input-border: #3a3a3a;
+  --panel-bg: #1f2130;
+  --panel-border: #ffffff22;
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -20,11 +35,11 @@ img, svg, video, canvas { max-width: 100%; height: auto; }
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--accent);
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: var(--accent-2);
 }
 
 body {
@@ -33,6 +48,8 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background: var(--bg);
+  color: var(--fg);
 }
 
 h1 {
@@ -76,12 +93,12 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--button-bg);
   cursor: pointer;
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: var(--accent);
 }
 button:focus,
 button:focus-visible {
@@ -89,8 +106,8 @@ button:focus-visible {
 }
 
 .link-item {
-  background: rgba(100, 108, 255, 0.08);
-  border: 1px solid #646cff33;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: 12px;
   margin: 1em auto;
   padding: 1em 1.5em;
@@ -100,22 +117,22 @@ button:focus-visible {
   transition: box-shadow 0.2s, border 0.2s;
 }
 .link-item:hover {
-  border-color: #646cff;
+  border-color: var(--accent);
   box-shadow: 0 4px 16px 0 #646cff33;
 }
 .link-item a {
   font-size: 1.2em;
   font-weight: bold;
-  color: #646cff;
+  color: var(--accent);
   text-decoration: underline;
 }
 .link-item div {
   margin-top: 0.3em;
   font-size: 0.98em;
-  color: #888;
+  color: var(--muted);
 }
 .link-item strong {
-  color: #535bf2;
+  color: var(--accent-2);
 }
 
 .link-item.pinned {
@@ -134,13 +151,15 @@ button:focus-visible {
 /* Mejorar el aspecto de los selectores y formularios */
 select, input[type="text"], input[type="url"] {
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--input-border);
   padding: 0.4em 0.8em;
   margin: 0.2em 0.4em;
   font-size: 1em;
+  background: var(--input-bg);
+  color: var(--input-fg);
 }
 select:focus, input:focus {
-  border-color: #646cff;
+  border-color: var(--accent);
   outline: none;
 }
 
@@ -161,6 +180,19 @@ select:focus, input:focus {
   :root {
     color: #213547;
     background-color: #ffffff;
+    --bg: #ffffff;
+    --fg: #213547;
+    --muted: #666;
+    --accent: #646cff;
+    --accent-2: #535bf2;
+    --card-bg: #f6f7ff;
+    --card-border: #dfe3ff;
+    --button-bg: #f9f9f9;
+    --input-bg: #ffffff;
+    --input-fg: #213547;
+    --input-border: #cccccc;
+    --panel-bg: #ffffff;
+    --panel-border: #0000001a;
   }
   a:hover {
     color: #747bff;
@@ -168,6 +200,25 @@ select:focus, input:focus {
   button {
     background-color: #f9f9f9;
   }
+}
+
+/* Theme overrides via user preference */
+html.theme-light {
+  color-scheme: light;
+}
+html.theme-light body {
+  color: #213547;
+  background-color: #ffffff;
+}
+html.theme-light button { background-color: #f9f9f9; }
+html.theme-light a:hover { color: #747bff; }
+
+html.theme-dark {
+  color-scheme: dark;
+}
+html.theme-dark body {
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
 }
 
 /* Modal */
@@ -183,12 +234,12 @@ select:focus, input:focus {
 }
 .modal-backdrop.open { display: flex; }
 .modal-panel {
-  background: #1f2130;
+  background: var(--panel-bg);
   color: inherit;
   border-radius: 12px;
   width: 100%;
   max-width: 640px;
-  border: 1px solid #ffffff22;
+  border: 1px solid var(--panel-border);
   box-shadow: 0 10px 30px #0007;
 }
 .modal-header, .modal-footer { 

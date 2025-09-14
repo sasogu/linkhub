@@ -68,6 +68,15 @@ let dbxDisconnectBtn = null;
             <button id="settings-close" type="button" aria-label="Cerrar">✕</button>
           </div>
           <div class="modal-section">
+            <h3>Tema</h3>
+            <label for="theme-select">Modo:</label>
+            <select id="theme-select">
+              <option value="auto">Automático (sistema)</option>
+              <option value="light">Claro</option>
+              <option value="dark">Oscuro</option>
+            </select>
+          </div>
+          <div class="modal-section">
             <h3>Dropbox</h3>
             <div id="modal-dropbox"></div>
           </div>
@@ -83,6 +92,7 @@ let dbxDisconnectBtn = null;
     `);
 
     const modal = document.getElementById('settings-modal');
+    const themeSelect = modal.querySelector('#theme-select');
     const modalDropbox = modal.querySelector('#modal-dropbox');
     const modalData = modal.querySelector('#modal-data');
 
@@ -114,6 +124,47 @@ let dbxDisconnectBtn = null;
     closeBtn.addEventListener('click', closeModal);
     closeBtn2.addEventListener('click', closeModal);
     modal.addEventListener('click', (e)=>{ if (e.target === modal) closeModal(); });
+
+    // Tema: aplicar y persistir
+    function setThemeMeta(mode) {
+      const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+      const effective = (mode === 'auto') ? (prefersLight ? 'light' : 'dark') : mode;
+      const color = effective === 'light' ? '#ffffff' : '#242424';
+      let meta = document.querySelector('meta[name="theme-color"][data-override]');
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('name','theme-color');
+        meta.setAttribute('data-override','true');
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', color);
+    }
+
+    function applyTheme(mode) {
+      const html = document.documentElement;
+      html.classList.remove('theme-light', 'theme-dark');
+      if (mode === 'light') html.classList.add('theme-light');
+      else if (mode === 'dark') html.classList.add('theme-dark');
+      setThemeMeta(mode);
+    }
+    const savedTheme = localStorage.getItem('themeMode') || 'auto';
+    applyTheme(savedTheme);
+    if (themeSelect) {
+      themeSelect.value = savedTheme;
+      themeSelect.addEventListener('change', () => {
+        const mode = themeSelect.value;
+        localStorage.setItem('themeMode', mode);
+        applyTheme(mode);
+      });
+    }
+    // Si el usuario tiene modo automático, reaccionar a cambios del sistema
+    if (window.matchMedia) {
+      const mql = window.matchMedia('(prefers-color-scheme: light)');
+      mql.addEventListener('change', () => {
+        const mode = localStorage.getItem('themeMode') || 'auto';
+        if (mode === 'auto') applyTheme('auto');
+      });
+    }
   } catch (e) {
     console.warn('Settings modal setup error:', e);
   }
