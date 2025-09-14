@@ -1,4 +1,4 @@
-const CACHE_VERSION = '0.1.0'; // Este valor será reemplazado automáticamente
+const CACHE_VERSION = '0.1.1'; // Este valor será reemplazado automáticamente
 const CACHE_NAME = `linkhub-cache-${CACHE_VERSION}`;
 
 self.addEventListener('install', event => {
@@ -14,6 +14,10 @@ self.addEventListener('activate', event => {
       )
     ).then(() => self.clients.claim())
   );
+  // Informar versión tras activar
+  self.clients.matchAll({ includeUncontrolled: true, type: 'window' }).then(clients => {
+    clients.forEach(c => c.postMessage({ type: 'SW_VERSION', version: CACHE_VERSION }));
+  });
 });
 
 self.addEventListener('fetch', event => {
@@ -29,4 +33,12 @@ self.addEventListener('fetch', event => {
       });
     })
   );
+});
+
+// Canal de mensajes para consultar la versión del SW
+self.addEventListener('message', (event) => {
+  const data = event.data || {};
+  if (data && data.type === 'GET_SW_VERSION') {
+    event.source && event.source.postMessage({ type: 'SW_VERSION', version: CACHE_VERSION });
+  }
 });

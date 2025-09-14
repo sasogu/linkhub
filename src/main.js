@@ -39,6 +39,7 @@ app.innerHTML = `
   </div>
   <h2>Enlaces guardados</h2>
   <div id="links-list"></div>
+  <footer style="margin-top:2em;color:#888;font-size:0.9em;">SW: <span id="sw-version">(cargando...)</span></footer>
 `;
 
 const form = document.getElementById('link-form');
@@ -54,6 +55,8 @@ const dbxStatus = document.getElementById('dropbox-status');
 const dbxConnectBtn = document.getElementById('dropbox-connect');
 const dbxSyncBtn = document.getElementById('dropbox-sync');
 const dbxDisconnectBtn = document.getElementById('dropbox-disconnect');
+// SW version UI
+const swVersionEl = document.getElementById('sw-version');
 
 function getLinks() {
   return JSON.parse(localStorage.getItem('links') || '[]');
@@ -269,7 +272,7 @@ function setDropboxUIConnected(connected, accountName) {
   } else {
     dbxStatus.textContent = 'Dropbox: desconectado';
     dbxStatus.style.color = '#888';
-    dbxConnectBtn.disabled = !DROPBOX_APP_KEY;
+    dbxConnectBtn.disabled = false;
     dbxSyncBtn.disabled = true;
     dbxDisconnectBtn.disabled = true;
   }
@@ -515,6 +518,30 @@ dbxDisconnectBtn.addEventListener('click', () => {
 dbxSyncBtn.addEventListener('click', () => { syncNow(); });
 
 window.addEventListener('online', () => queueDropboxSync(200));
+
+// Mostrar versión del Service Worker en el pie
+function requestSwVersion() {
+  if (!('serviceWorker' in navigator)) return;
+  if (navigator.serviceWorker.controller) {
+    try { navigator.serviceWorker.controller.postMessage({ type: 'GET_SW_VERSION' }); } catch {}
+  }
+  if (navigator.serviceWorker.ready) {
+    navigator.serviceWorker.ready.then(reg => {
+      try { if (reg && reg.active) reg.active.postMessage({ type: 'GET_SW_VERSION' }); } catch {}
+    }).catch(()=>{});
+  }
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    const data = event.data || {};
+    if (data.type === 'SW_VERSION' && swVersionEl) {
+      swVersionEl.textContent = String(data.version);
+    }
+  });
+  // pedir versión tras breve espera (primera carga)
+  setTimeout(requestSwVersion, 500);
+}
 
 // Manejo del retorno OAuth
 (async function handleOAuthReturn() {
