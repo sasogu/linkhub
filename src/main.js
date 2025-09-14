@@ -253,15 +253,63 @@ const dbxSyncBtn = document.getElementById('dropbox-sync');
 // SW version UI
 const swVersionEl = document.getElementById('sw-version');
 
-function getLinks() {
-  return JSON.parse(localStorage.getItem('links') || '[]');
+function nowTs() { return Date.now(); }
+
+function genId() {
+  const rnd = Math.random().toString(36).slice(2, 8);
+  return 'l_' + nowTs().toString(36) + '_' + rnd;
 }
 
-function saveLinks(links) {
-  localStorage.setItem('links', JSON.stringify(links));
-  localStorage.setItem('linksUpdatedAt', String(Date.now()));
+function getAllItems() {
+  try { return JSON.parse(localStorage.getItem('links') || '[]'); } catch { return []; }
+}
+function saveAllItems(items) {
+  localStorage.setItem('links', JSON.stringify(items));
+  localStorage.setItem('linksUpdatedAt', String(nowTs()));
   queueDropboxSync();
 }
+function getActiveItems() {
+  return getAllItems().filter(it => !it.deleted);
+}
+// Backwards compat helper used by UI code
+function getLinks() { return getActiveItems(); }
+
+// Ensure items have id and timestamps
+function migrateItemsToV2(items) {
+  let changed = false;
+  const out = items.map((it) => {
+    const copy = { ...it };
+    if (!copy.id) { copy.id = genId(); changed = true; }
+    if (!copy.hasOwnProperty('pinned')) { copy.pinned = false; changed = true; }
+    if (!copy.updatedAt) { copy.updatedAt = nowTs(); changed = true; }
+    return copy;
+  });
+  return { items: out, changed };
+}
+
+function itemVersion(it) {
+  const ua = Number(it.updatedAt || 0);
+  const da = Number(it.deletedAt || 0);
+  return Math.max(ua, da);
+}
+
+function mergeItems(localItems, remoteItems) {
+  const map = new Map();
+  const addOrMerge = (it) => {
+    const prev = map.get(it.id);
+    if (!prev) { map.set(it.id, it); return; }
+    map.set(it.id, itemVersion(it) >= itemVersion(prev) ? it : prev);
+  };
+  localItems.forEach(addOrMerge);
+  remoteItems.forEach(addOrMerge);
+  return Array.from(map.values());
+}
+
+// Run a one-time local migration
+(function ensureLocalMigration() {
+  const { items, changed } = migrateItemsToV2(getAllItems());
+  if (changed) saveAllItems(items);
+})();
 
 function getAllCategories(links) {
   return Array.from(new Set(links.map(l => (l.category || '').trim()).filter(Boolean)));
@@ -311,8 +359,8 @@ function renderLinks() {
   // Ordenar alfabéticamente por título
   pinned.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'es', {sensitivity:'base'}));
   normal.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'es', {sensitivity:'base'}));
-  const render = arr => arr.map((link, idx) => `
-    <div class="link-item${link.pinned ? ' pinned' : ''}" data-idx="${links.indexOf(link)}">
+  const render = arr => arr.map((link) => `
+    <div class="link-item${link.pinned ? ' pinned' : ''}" data-id="${link.id}">
       <a href="${link.url}" target="_blank">${link.title}</a>
       <div><strong>Categoría:</strong> ${link.category || '-'}</div>
       <div><strong>Etiquetas:</strong> ${link.tags ? link.tags.join(', ') : '-'}</div>
@@ -342,14 +390,14 @@ function renderLinks() {
   document.querySelectorAll('.edit-link').forEach(btn => {
     btn.onclick = function() {
       const container = this.closest('.link-item');
-      const idx = container ? container.getAttribute('data-idx') : null;
-      const link = getLinks()[idx];
+      const id = container ? container.getAttribute('data-id') : null;
+      const link = getActiveItems().find(l => l.id === id);
       if (window.__openAddModal) window.__openAddModal();
       form.url.value = link.url;
       form.title.value = link.title;
       form.tags.value = (link.tags || []).join(', ');
       form.category.value = link.category || '';
-      form.setAttribute('data-edit', idx);
+      form.setAttribute('data-edit-id', id);
       form.querySelector('button[type="submit"]').textContent = 'Guardar cambios';
       form.scrollIntoView({behavior:'smooth'});
     };
@@ -358,21 +406,23 @@ function renderLinks() {
   document.querySelectorAll('.pin-link').forEach(btn => {
     btn.onclick = function() {
       const container = this.closest('.link-item');
-      const idx = container ? container.getAttribute('data-idx') : null;
-      const links = getLinks();
-      links[idx].pinned = !links[idx].pinned;
-      saveLinks(links);
+      const id = container ? container.getAttribute('data-id') : null;
+      const items = getAllItems();
+      const i = items.findIndex(it => it.id === id);
+      if (i !== -1) { items[i].pinned = !items[i].pinned; items[i].updatedAt = nowTs(); }
+      saveAllItems(items);
       renderLinks();
     };
   });
   document.querySelectorAll('.delete-link').forEach(btn => {
     btn.onclick = function() {
       const container = this.closest('.link-item');
-      const idx = container ? container.getAttribute('data-idx') : null;
+      const id = container ? container.getAttribute('data-id') : null;
       if (confirm('¿Seguro que quieres eliminar este enlace?')) {
-        const links = getLinks();
-        links.splice(idx, 1);
-        saveLinks(links);
+        const items = getAllItems();
+        const i = items.findIndex(it => it.id === id);
+        if (i !== -1) { items[i].deleted = true; items[i].deletedAt = nowTs(); }
+        saveAllItems(items);
         renderLinks();
         updateFilters();
       }
@@ -381,8 +431,8 @@ function renderLinks() {
   document.querySelectorAll('.share-link').forEach(btn => {
     btn.onclick = function() {
       const container = this.closest('.link-item');
-      const idx = container ? container.getAttribute('data-idx') : null;
-      const link = getLinks()[idx];
+      const id = container ? container.getAttribute('data-id') : null;
+      const link = getActiveItems().find(l => l.id === id);
       if (navigator.share) {
         navigator.share({
           title: link.title,
@@ -403,19 +453,21 @@ form.addEventListener('submit', e => {
   const title = form.title.value.trim();
   const tags = form.tags.value.split(',').map(t => t.trim()).filter(Boolean);
   const category = form.category.value.trim();
-  const links = getLinks();
-  const editIdx = form.getAttribute('data-edit');
-  if (editIdx !== null) {
+  const items = getAllItems();
+  const editId = form.getAttribute('data-edit-id');
+  if (editId) {
     // Editar enlace existente
-    const prev = links[editIdx] || {};
-    links[editIdx] = { ...prev, url, title, tags, category };
-    form.removeAttribute('data-edit');
+    const idx = items.findIndex(it => it.id === editId);
+    if (idx !== -1) {
+      items[idx] = { ...items[idx], url, title, tags, category, updatedAt: nowTs(), deleted: false };
+    }
+    form.removeAttribute('data-edit-id');
     form.querySelector('button[type="submit"]').textContent = 'Añadir enlace';
   } else {
     // Añadir nuevo enlace
-    links.push({ url, title, tags, category, pinned: false });
+    items.push({ id: genId(), url, title, tags, category, pinned: false, updatedAt: nowTs() });
   }
-  saveLinks(links);
+  saveAllItems(items);
   form.reset();
   renderLinks();
   updateFilters();
@@ -428,7 +480,7 @@ form.addEventListener('submit', e => {
 });
 
 exportBtn.addEventListener('click', () => {
-  const links = getLinks();
+  const links = getActiveItems();
   const blob = new Blob([JSON.stringify(links, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -450,7 +502,14 @@ importFile.addEventListener('change', (e) => {
     try {
       const imported = JSON.parse(event.target.result);
       if (Array.isArray(imported)) {
-        saveLinks(imported);
+        const { items } = migrateItemsToV2(imported);
+        saveAllItems(items);
+        renderLinks();
+        updateFilters();
+        alert('Enlaces importados correctamente.');
+      } else if (imported && imported.schema === 2 && Array.isArray(imported.items)) {
+        const { items } = migrateItemsToV2(imported.items);
+        saveAllItems(items);
         renderLinks();
         updateFilters();
         alert('Enlaces importados correctamente.');
@@ -643,8 +702,11 @@ async function pullFromDropbox() {
   });
   if (res.status === 409) return null; // no existe
   if (!res.ok) throw new Error('Descarga de Dropbox fallida');
+  const metaHeader = res.headers.get('Dropbox-API-Result');
+  let rev = null;
+  try { if (metaHeader) rev = JSON.parse(metaHeader).rev || null; } catch {}
   const text = await res.text();
-  try { return JSON.parse(text); } catch { return null; }
+  try { return { data: JSON.parse(text), rev }; } catch { return { data: null, rev }; }
 }
 
 async function ensureDropboxFolder(path) {
@@ -661,17 +723,44 @@ async function ensureDropboxFolder(path) {
   }
 }
 
-async function pushToDropbox(payload) {
+async function pushToDropbox(payload, rev=null, retry=1) {
   const body = JSON.stringify(payload);
   await ensureDropboxFolder(DROPBOX_FILE_PATH);
+  const arg = rev ? { path: DROPBOX_FILE_PATH, mode: { '.tag': 'update', update: rev }, mute: true } : { path: DROPBOX_FILE_PATH, mode: 'overwrite', mute: true };
   const res = await dbxFetch('POST', 'https://content.dropboxapi.com/2/files/upload', {
     headers: {
       'Content-Type': 'application/octet-stream',
-      'Dropbox-API-Arg': JSON.stringify({ path: DROPBOX_FILE_PATH, mode: 'overwrite', mute: true })
+      'Dropbox-API-Arg': JSON.stringify(arg)
     },
     body
   });
+  if (res.status === 409 && retry > 0) {
+    // conflicto: re-pull, merge y reintentar una vez
+    try {
+      const remote = await pullFromDropbox();
+      const remoteItems = normalizeRemote(remote?.data);
+      const merged = mergeItems(getAllItems(), remoteItems);
+      saveAllItems(merged);
+      return pushToDropbox(buildRemotePayload(merged), remote?.rev || null, retry-1);
+    } catch {}
+  }
   if (!res.ok) throw new Error('Subida a Dropbox fallida');
+  try { const meta = await res.json(); if (meta && meta.rev) localStorage.setItem('dropboxRev', meta.rev); } catch {}
+}
+
+function normalizeRemote(remoteData) {
+  if (!remoteData) return [];
+  if (remoteData.schema === 2 && Array.isArray(remoteData.items)) {
+    const { items } = migrateItemsToV2(remoteData.items);
+    return items;
+  }
+  const arr = Array.isArray(remoteData?.links) ? remoteData.links : [];
+  const { items } = migrateItemsToV2(arr);
+  return items;
+}
+
+function buildRemotePayload(items) {
+  return { schema: 2, items, updatedAt: nowTs() };
 }
 
 async function initialSync() {
@@ -681,18 +770,13 @@ async function initialSync() {
   setDropboxUIConnected(true, name);
   try {
     const remote = await pullFromDropbox();
-    const local = getLinks();
-    const localUpdated = Number(localStorage.getItem('linksUpdatedAt') || '0');
-    const remoteUpdated = Number(remote?.updatedAt || 0);
-    if (remote && (remoteUpdated >= localUpdated)) {
-      localStorage.setItem('linksUpdatedAt', String(remoteUpdated));
-      localStorage.setItem('links', JSON.stringify(remote.links || []));
-      renderLinks();
-      updateFilters();
-    } else {
-      // no remoto o local más reciente -> subir
-      await pushToDropbox({ links: local, updatedAt: ts(), schema: 1 });
-    }
+    const remoteItems = normalizeRemote(remote?.data);
+    const localItems = getAllItems();
+    const merged = mergeItems(localItems, remoteItems);
+    saveAllItems(merged);
+    renderLinks();
+    updateFilters();
+    await pushToDropbox(buildRemotePayload(merged), remote?.rev || localStorage.getItem('dropboxRev') || null);
   } catch (e) {
     console.warn('Sync inicial Dropbox:', e);
   }
@@ -712,19 +796,13 @@ async function syncNow() {
   dbxStatus.textContent = 'Dropbox: sincronizando...';
   try {
     const remote = await pullFromDropbox();
-    const local = getLinks();
-    const localUpdated = Number(localStorage.getItem('linksUpdatedAt') || '0');
-    const remoteUpdated = Number(remote?.updatedAt || 0);
-    if (remote && remoteUpdated > localUpdated) {
-      localStorage.setItem('links', JSON.stringify(remote.links || []));
-      localStorage.setItem('linksUpdatedAt', String(remoteUpdated));
-      renderLinks();
-      updateFilters();
-    } else if (localUpdated >= remoteUpdated) {
-      const updatedAt = ts();
-      await pushToDropbox({ links: local, updatedAt, schema: 1 });
-      localStorage.setItem('linksUpdatedAt', String(updatedAt));
-    }
+    const remoteItems = normalizeRemote(remote?.data);
+    const localItems = getAllItems();
+    const merged = mergeItems(localItems, remoteItems);
+    saveAllItems(merged);
+    renderLinks();
+    updateFilters();
+    await pushToDropbox(buildRemotePayload(merged), remote?.rev || localStorage.getItem('dropboxRev') || null);
     const name = await dbxGetAccountName();
     setDropboxUIConnected(true, name);
     dbxStatus.textContent = 'Dropbox: sincronizado';
