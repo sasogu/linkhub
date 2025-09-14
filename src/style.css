@@ -191,6 +191,23 @@ button:focus-visible {
   margin-top: 0.5em;
 }
 
+/* Icon action variants */
+.edit-link.icon-btn,
+.pin-link.icon-btn {
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.edit-link.icon-btn:hover,
+.share-link.icon-btn:hover { background: #646cff14; }
+
+.pin-link.icon-btn:hover { background: rgba(212, 163, 0, 0.15); }
+
+.link-item.pinned .pin-link.icon-btn {
+  color: var(--pinned-accent);
+  border-color: var(--pinned-accent);
+}
+
 .link-item.pinned {
   background: var(--pinned-bg);
   border: 2px solid var(--pinned-border);
