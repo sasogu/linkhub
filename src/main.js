@@ -41,6 +41,9 @@ app.innerHTML = `
   <footer style="margin-top:2em;color:#888;font-size:0.9em;">SW: <span id="sw-version">(cargando...)</span></footer>
 `;
 
+// Declarar referencia del botón "Desconectar" antes de construir el modal
+let dbxDisconnectBtn = null;
+
 // Configuración: crear modal y mover controles (Dropbox, Importar/Exportar)
 (function setupSettingsModal() {
   try {
@@ -126,7 +129,6 @@ const searchInput = document.getElementById('search');
 const dbxStatus = document.getElementById('dropbox-status');
 const dbxConnectBtn = document.getElementById('dropbox-connect');
 const dbxSyncBtn = document.getElementById('dropbox-sync');
-let dbxDisconnectBtn = null; // se creará en el modal
 // SW version UI
 const swVersionEl = document.getElementById('sw-version');
 
