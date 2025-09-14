@@ -41,6 +41,69 @@ app.innerHTML = `
   <footer style="margin-top:2em;color:#888;font-size:0.9em;">SW: <span id="sw-version">(cargando...)</span></footer>
 `;
 
+// Configuración: crear modal y mover controles (Dropbox, Importar/Exportar)
+(function setupSettingsModal() {
+  try {
+    const h1 = app.querySelector('h1');
+    const wrap = document.createElement('div');
+    wrap.style.margin = '0.5em 0';
+    wrap.id = 'settings-trigger';
+    const btn = document.createElement('button');
+    btn.id = 'settings-open';
+    btn.type = 'button';
+    btn.textContent = 'Configuración';
+    wrap.appendChild(btn);
+    if (h1 && h1.parentNode) h1.parentNode.insertBefore(wrap, h1.nextSibling);
+
+    app.insertAdjacentHTML('beforeend', `
+      <div id="settings-modal" class="modal-backdrop" aria-hidden="true">
+        <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+          <div class="modal-header">
+            <h2 id="settings-title">Configuración</h2>
+            <button id="settings-close" type="button" aria-label="Cerrar">✕</button>
+          </div>
+          <div class="modal-section">
+            <h3>Dropbox</h3>
+            <div id="modal-dropbox"></div>
+          </div>
+          <div class="modal-section">
+            <h3>Datos</h3>
+            <div id="modal-data"></div>
+          </div>
+          <div class="modal-footer">
+            <button id="settings-close-2" type="button">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    `);
+
+    const modal = document.getElementById('settings-modal');
+    const modalDropbox = modal.querySelector('#modal-dropbox');
+    const modalData = modal.querySelector('#modal-data');
+
+    const dropboxBar = document.getElementById('dropbox-bar');
+    if (dropboxBar) modalDropbox.appendChild(dropboxBar);
+
+    const exportBtnEl = document.getElementById('export-btn');
+    if (exportBtnEl && exportBtnEl.parentElement) {
+      const container = exportBtnEl.parentElement;
+      modalData.appendChild(container);
+    }
+
+    const openBtn = document.getElementById('settings-open');
+    const closeBtn = document.getElementById('settings-close');
+    const closeBtn2 = document.getElementById('settings-close-2');
+    function openModal(){ modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); }
+    function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    closeBtn2.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e)=>{ if (e.target === modal) closeModal(); });
+  } catch (e) {
+    console.warn('Settings modal setup error:', e);
+  }
+})();
+
 const form = document.getElementById('link-form');
 const linksList = document.getElementById('links-list');
 const exportBtn = document.getElementById('export-btn');
