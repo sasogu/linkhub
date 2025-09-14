@@ -29,6 +29,12 @@
   --panel-border: #ffffff22;
   --focus: #7e85ff66;
   --border: #343545;
+
+  /* Pinned (dark defaults) */
+  --pinned-bg: linear-gradient(0deg, rgba(255, 208, 58, 0.16), rgba(255, 208, 58, 0.16)), var(--card-bg);
+  --pinned-border: #d4a300;
+  --pinned-shadow: #d4a30033;
+  --pinned-accent: #d4a300;
 }
 
 /* Layout seguro en móviles: sin scroll horizontal */
@@ -245,7 +251,7 @@ select:focus, input:focus {
     --panel-bg: #ffffff;
     --panel-border: #0000001a;
     /* Pinned (light) */
-    --pinned-bg: linear-gradient(90deg, #fff3b0 0%, #fffbe6 100%);
+    --pinned-bg: linear-gradient(0deg, rgba(255, 208, 58, 0.22), rgba(255, 208, 58, 0.22)), var(--card-bg);
     --pinned-border: #ffd24d;
     --pinned-shadow: #ffd24d33;
     --pinned-accent: #b8860b;

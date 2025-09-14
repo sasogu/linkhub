@@ -276,7 +276,8 @@ function renderLinks() {
   // Eventos de edición
   document.querySelectorAll('.edit-link').forEach(btn => {
     btn.onclick = function() {
-      const idx = this.parentElement.getAttribute('data-idx');
+      const container = this.closest('.link-item');
+      const idx = container ? container.getAttribute('data-idx') : null;
       const link = getLinks()[idx];
       form.url.value = link.url;
       form.title.value = link.title;
@@ -290,7 +291,8 @@ function renderLinks() {
   // Eventos de fijar/desfijar
   document.querySelectorAll('.pin-link').forEach(btn => {
     btn.onclick = function() {
-      const idx = this.parentElement.getAttribute('data-idx');
+      const container = this.closest('.link-item');
+      const idx = container ? container.getAttribute('data-idx') : null;
       const links = getLinks();
       links[idx].pinned = !links[idx].pinned;
       saveLinks(links);
@@ -299,7 +301,8 @@ function renderLinks() {
   });
   document.querySelectorAll('.delete-link').forEach(btn => {
     btn.onclick = function() {
-      const idx = this.parentElement.getAttribute('data-idx');
+      const container = this.closest('.link-item');
+      const idx = container ? container.getAttribute('data-idx') : null;
       if (confirm('¿Seguro que quieres eliminar este enlace?')) {
         const links = getLinks();
         links.splice(idx, 1);
@@ -311,7 +314,8 @@ function renderLinks() {
   });
   document.querySelectorAll('.share-link').forEach(btn => {
     btn.onclick = function() {
-      const idx = this.parentElement.getAttribute('data-idx');
+      const container = this.closest('.link-item');
+      const idx = container ? container.getAttribute('data-idx') : null;
       const link = getLinks()[idx];
       if (navigator.share) {
         navigator.share({
