@@ -12,8 +12,10 @@ app.innerHTML = `
   <form id="link-form">
     <input type="url" id="url" placeholder="Enlace (https://...)" required />
     <input type="text" id="title" placeholder="Título" required />
-    <input type="text" id="tags" placeholder="Etiquetas (separadas por coma)" />
-    <input type="text" id="category" placeholder="Categoría" />
+    <input type="text" id="tags" list="tags-datalist" placeholder="Etiquetas (separadas por coma)" />
+    <datalist id="tags-datalist"></datalist>
+    <input type="text" id="category" list="categories-datalist" placeholder="Categoría" />
+    <datalist id="categories-datalist"></datalist>
     <button type="submit">Añadir enlace</button>
   </form>
   <div style="margin:1em 0;">
@@ -125,6 +127,9 @@ const importFile = document.getElementById('import-file');
 const filterCategory = document.getElementById('filter-category');
 const filterTag = document.getElementById('filter-tag');
 const searchInput = document.getElementById('search');
+// Datalists para categorías y etiquetas
+const tagsDatalist = document.getElementById('tags-datalist');
+const categoriesDatalist = document.getElementById('categories-datalist');
 // Dropbox UI
 const dbxStatus = document.getElementById('dropbox-status');
 const dbxConnectBtn = document.getElementById('dropbox-connect');
@@ -155,6 +160,13 @@ function updateFilters() {
   const tags = getAllTags(links).sort((a, b) => a.localeCompare(b, 'es', {sensitivity:'base'}));
   filterCategory.innerHTML = '<option value="">Todas</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
   filterTag.innerHTML = '<option value="">Todas</option>' + tags.map(t => `<option value="${t}">${t}</option>`).join('');
+  // Poblar datalists manteniendo la capacidad de escribir nuevos valores
+  if (categoriesDatalist) {
+    categoriesDatalist.innerHTML = categories.map(c => `<option value="${c}"></option>`).join('');
+  }
+  if (tagsDatalist) {
+    tagsDatalist.innerHTML = tags.map(t => `<option value="${t}"></option>`).join('');
+  }
 }
 
 function renderLinks() {
