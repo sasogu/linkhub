@@ -274,12 +274,13 @@ form.addEventListener('submit', e => {
   const editIdx = form.getAttribute('data-edit');
   if (editIdx !== null) {
     // Editar enlace existente
-    links[editIdx] = { url, title, tags, category };
+    const prev = links[editIdx] || {};
+    links[editIdx] = { ...prev, url, title, tags, category };
     form.removeAttribute('data-edit');
     form.querySelector('button[type="submit"]').textContent = 'Añadir enlace';
   } else {
     // Añadir nuevo enlace
-    links.push({ url, title, tags, category });
+    links.push({ url, title, tags, category, pinned: false });
   }
   saveLinks(links);
   form.reset();
