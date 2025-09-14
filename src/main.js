@@ -253,8 +253,8 @@ function renderLinks() {
       <div><strong>Etiquetas:</strong> ${link.tags ? link.tags.join(', ') : '-'}</div>
       <button class="edit-link" style="margin-top:0.5em;">Editar</button>
       <button class="pin-link" style="margin-top:0.5em;">${link.pinned ? 'Desfijar' : 'Fijar'}</button>
-      <button class="delete-link" style="margin-top:0.5em;color:#c00;background:#fff3f3;border:1px solid #c00;">Eliminar</button>
-      <button class="share-link" style="margin-top:0.5em;color:#1a7f37;background:#e6fff3;border:1px solid #1a7f37;">Compartir</button>
+      <button class="delete-link btn--danger" style="margin-top:0.5em;">Eliminar</button>
+      <button class="share-link btn--ghost" style="margin-top:0.5em;">Compartir</button>
     </div>
   `).join('');
   linksList.innerHTML =

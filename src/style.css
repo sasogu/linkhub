@@ -7,6 +7,11 @@
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
 
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
   /* Theme variables (dark by default) */
   --bg: #242424;
   --fg: rgba(255, 255, 255, 0.87);
@@ -16,21 +21,14 @@
   --card-bg: #2b2f42;
   --card-border: #646cff33;
   --button-bg: #1a1a1a;
+  --button-border: #3a3a3a;
   --input-bg: #1a1a1a;
   --input-fg: var(--fg);
   --input-border: #3a3a3a;
   --panel-bg: #1f2130;
   --panel-border: #ffffff22;
-  /* Pinned (dark default) */
-  --pinned-bg: linear-gradient(90deg, #4a3a00 0%, #2e2400 100%);
-  --pinned-border: #d4a300;
-  --pinned-shadow: #d4a30033;
-  --pinned-accent: #d4a300;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --focus: #7e85ff66;
+  --border: #343545;
 }
 
 /* Layout seguro en móviles: sin scroll horizontal */
@@ -93,7 +91,7 @@ h1 {
 
 button {
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: 1px solid var(--button-border);
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
@@ -107,8 +105,31 @@ button:hover {
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus);
 }
+
+/* Button variants */
+.btn--primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.btn--primary:hover { filter: brightness(1.05); }
+
+.btn--ghost {
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.btn--ghost:hover { background: #646cff14; }
+
+.btn--danger {
+  background: var(--danger-bg);
+  color: var(--danger-fg);
+  border-color: var(--danger-border);
+}
+.btn--danger:hover { filter: brightness(1.05); }
 
 .link-item {
   background: var(--card-bg);
@@ -166,6 +187,7 @@ select, input[type="text"], input[type="url"] {
 select:focus, input:focus {
   border-color: var(--accent);
   outline: none;
+  box-shadow: 0 0 0 3px var(--focus);
 }
 
 /* Barra de Dropbox adaptable */
@@ -203,6 +225,12 @@ select:focus, input:focus {
     --pinned-border: #ffd24d;
     --pinned-shadow: #ffd24d33;
     --pinned-accent: #b8860b;
+    --button-border: #d9d9df;
+    --focus: #BDC3FF80;
+    --border: #d9d9df;
+    --danger-bg: #fff3f3;
+    --danger-border: #d93025;
+    --danger-fg: #7a0f0a;
   }
   a:hover {
     color: #747bff;
@@ -261,3 +289,6 @@ html.theme-dark body {
 .modal-header { border-bottom: 1px solid #ffffff1a; }
 .modal-footer { border-top: 1px solid #ffffff1a; }
 .modal-section { padding: 1rem 1.25rem; }
+
+/* Selection color */
+::selection { background: #646cff66; }
