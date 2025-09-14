@@ -18,7 +18,6 @@ app.innerHTML = `
     <datalist id="categories-datalist"></datalist>
     <div style="margin-top:0.6em;display:flex;gap:0.5em;flex-wrap:wrap;justify-content:center;">
       <button type="submit">Añadir enlace</button>
-      <button type="button" id="form-cancel">Cancelar</button>
     </div>
   </form>
   <div style="margin:1em 0;">
@@ -92,8 +91,6 @@ let dbxDisconnectBtn = null;
     // Estilo primario al botón de submit
     const submitBtn = formEl.querySelector('button[type="submit"]');
     if (submitBtn) submitBtn.classList.add('btn--primary');
-    const cancelBtn = formEl.querySelector('#form-cancel');
-    if (cancelBtn) cancelBtn.classList.add('btn--ghost');
 
     function openAdd(){ addModal.classList.add('open'); addModal.setAttribute('aria-hidden','false'); }
     function closeAdd(){ addModal.classList.remove('open'); addModal.setAttribute('aria-hidden','true'); }
@@ -124,6 +121,7 @@ let dbxDisconnectBtn = null;
     const btn = document.createElement('button');
     btn.id = 'settings-open';
     btn.type = 'button';
+    btn.className = 'btn--ghost';
     btn.textContent = 'Configuración';
     top.appendChild(btn);
 
@@ -242,7 +240,6 @@ const linksList = document.getElementById('links-list');
 const exportBtn = document.getElementById('export-btn');
 const importBtn = document.getElementById('import-btn');
 const importFile = document.getElementById('import-file');
-const formCancel = document.getElementById('form-cancel');
 const filterCategory = document.getElementById('filter-category');
 const filterTag = document.getElementById('filter-tag');
 const searchInput = document.getElementById('search');
@@ -467,21 +464,6 @@ importFile.addEventListener('change', (e) => {
   reader.readAsText(file);
   importFile.value = '';
 });
-
-// Cancelar en el formulario: cerrar modal y limpiar estado de edición
-if (formCancel) {
-  formCancel.addEventListener('click', () => {
-    form.reset();
-    form.removeAttribute('data-edit');
-    const sb = form.querySelector('button[type="submit"]');
-    if (sb) sb.textContent = 'Añadir enlace';
-    const addModal = document.getElementById('add-modal');
-    if (addModal) {
-      addModal.classList.remove('open');
-      addModal.setAttribute('aria-hidden', 'true');
-    }
-  });
-}
 
 filterCategory.addEventListener('change', () => {
   renderLinks();
